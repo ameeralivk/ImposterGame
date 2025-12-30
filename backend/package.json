@@ -2,10 +2,11 @@
   "name": "backent",
   "version": "1.0.0",
   "main": "index.js",
- "scripts": {
-    "build": "tsc",
-    "start": "node dist/server.js"
-  },
+"scripts": {
+  "build": "tsc",
+  "start": "node dist/server.js",
+  "dev": "ts-node server.ts"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
