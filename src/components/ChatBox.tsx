@@ -12,7 +12,12 @@ interface ChatBoxProps {
   disabled?: boolean;
 }
 
-export const ChatBox = ({ messages, players, onSendMessage, disabled }: ChatBoxProps) => {
+export const ChatBox = ({
+  messages,
+  players,
+  onSendMessage,
+  disabled,
+}: ChatBoxProps) => {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 

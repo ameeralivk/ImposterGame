@@ -5,7 +5,7 @@
 //   room: Room | null;
 //   currentPlayer: Player | null;
 //   messages: GameMessage[];
-  
+
 //   // Actions
 //   createRoom: (playerName: string) => void;
 //   joinRoom: (roomCode: string, playerName: string) => boolean;
@@ -32,7 +32,7 @@
 //   createRoom: (playerName: string) => {
 //     const playerId = generateId();
 //     const roomCode = generateRoomCode();
-    
+
 //     const player: Player = {
 //       id: playerId,
 //       name: playerName,
@@ -64,12 +64,12 @@
 
 //   joinRoom: (roomCode: string, playerName: string) => {
 //     const { room } = get();
-    
+
 //     // For demo, we'll simulate joining
 //     if (!room || room.code !== roomCode.toUpperCase()) {
 //       // Create a demo room for testing
 //       const playerId = generateId();
-      
+
 //       const player: Player = {
 //         id: playerId,
 //         name: playerName,
@@ -140,7 +140,7 @@
 //     // Add to existing room
 //     const playerId = generateId();
 //     const colorIndex = room.players.length % PLAYER_COLORS.length;
-    
+
 //     const player: Player = {
 //       id: playerId,
 //       name: playerName,
@@ -157,7 +157,7 @@
 //       room: { ...room, players: [...room.players, player] },
 //       currentPlayer: player,
 //     });
-    
+
 //     return true;
 //   },
 
@@ -306,7 +306,6 @@
 //   },
 // }));
 
-
 // import { create } from 'zustand';
 // import { io, Socket } from 'socket.io-client';
 // import { Room, Player, GameMessage } from '@/types/game';
@@ -402,7 +401,6 @@
 //     });
 //   },
 // }));
-
 
 // import { create } from "zustand";
 // import { io, Socket } from "socket.io-client";
@@ -546,7 +544,6 @@
 //   };
 // });
 
-
 import { create } from "zustand";
 import { io, Socket } from "socket.io-client";
 import { Room, Player, GameMessage } from "@/types/game";
@@ -563,6 +560,7 @@ interface GameState {
   sendMessage: (content: string) => void;
   castVote: (targetId: string) => void;
   leaveRoom: () => void;
+  nextRound?: () => void;
 }
 
 export const useGameState = create<GameState>((set, get) => {
@@ -580,6 +578,7 @@ export const useGameState = create<GameState>((set, get) => {
     });
 
     socket.on("newMessage", (msg: GameMessage) => {
+      console.log(msg, "message received");
       set((state) => ({ messages: [...state.messages, msg] }));
     });
 
@@ -645,8 +644,16 @@ export const useGameState = create<GameState>((set, get) => {
     },
 
     // ---------- SEND MESSAGE ----------
+    // sendMessage: (content) => {
+    //   const { room } = get();
+    //   console.log(content, "ameer ready");
+    //   if (!socket || !room) return;
+
+    //   socket.emit("newMessage", { roomCode: room.code, content });
+    // },
     sendMessage: (content) => {
       const { room } = get();
+      console.log(content, "ameer ready");
       if (!socket || !room) return;
 
       socket.emit("sendMessage", { roomCode: room.code, content });
@@ -680,5 +687,3 @@ export const useGameState = create<GameState>((set, get) => {
     },
   };
 });
-
-

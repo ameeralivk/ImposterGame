@@ -31,7 +31,8 @@ export const WaitingRoomScreen = () => {
             WAITING ROOM
           </h1>
           <p className="text-muted-foreground">
-            {room.players.length} player{room.players.length !== 1 && "s"} in lobby
+            {room.players.length} player{room.players.length !== 1 && "s"} in
+            lobby
           </p>
         </div>
 
