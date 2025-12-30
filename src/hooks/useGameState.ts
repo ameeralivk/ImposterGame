@@ -572,7 +572,7 @@ export const useGameState = create<GameState>((set, get) => {
   const initSocket = () => {
     if (socket) return socket;
 
-    socket = io("http://localhost:8080", { transports: ["websocket"] });
+    socket = io("http://localhost:4000", { transports: ["websocket"] });
 
     socket.on("roomUpdate", (room: Room) => {
       console.log("ROOM UPDATE:", room.status);
