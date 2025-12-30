@@ -144,7 +144,7 @@ io.on("connection", (socket) => {
   // Add startGame, castVote, nextRound, endRound similar to above
 });
 
-server.listen(4000, () => console.log("Server running on port 4000"));
+server.listen(8080, () => console.log("Server running on port 4000"));
 
 // Helpers
 const generateRoomCode = () => "ABC123"; // simplified for demo
