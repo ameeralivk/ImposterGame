@@ -3,10 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": {
-    "build": "cd src && npm install && npm run build && cd ../backend && npm install && npm run build",
-    "start": "cd backend && npm start"
-  },
+ "scripts": {
+  "build:frontend": "cd src && npm install && npm run build",
+  "build:backend": "cd backend && npm install && npm run build",
+  "build": "npm run build:frontend && npm run build:backend",
+  "start": "cd backend && node dist/server.js"
+},
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",
