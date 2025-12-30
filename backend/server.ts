@@ -406,29 +406,75 @@ io.on("connection", (socket) => {
   });
 
   /* START GAME */
-  socket.on("startGame", ({ roomCode, category }) => {
-    const room = rooms[roomCode];
-    if (!room) return;
-    console.log(category, "cat");
-    const wordsForCategory = WORDS[category];
-    if (!wordsForCategory || wordsForCategory.length === 0) {
-      console.log(`Category "${category}" not found or empty!`);
-      return;
-    }
-    room.status = "playing";
-    room.category = category;
-    room.currentWord = randomItem(wordsForCategory);
+  // socket.on("startGame", ({ roomCode, category, word }) => {
+  //   console.log(word, "word");
+  //   const room = rooms[roomCode];
+  //   if (!room) return;
+  //   console.log(category, "cat");
+  //   const wordsForCategory = WORDS[category];
+  //   if (!wordsForCategory || wordsForCategory.length === 0) {
+  //     console.log(`Category "${category}" not found or empty!`);
+  //     return;
+  //   }
+  //   room.status = "playing";
+  //   room.category = category;
+  //   room.currentWord = randomItem(wordsForCategory);
 
-    // Pick one player as thief
-    const players = room.players;
-    const thiefIndex = Math.floor(Math.random() * players.length);
-    players.forEach((p, i) => (p.isThief = i === thiefIndex));
-    room.thiefId = players[thiefIndex].id;
-    io.to(roomCode).emit("roomUpdate", room);
-    console.log(
-      `Game started in room ${roomCode} with thief ${players[thiefIndex].name}`
-    );
+  //   // Pick one player as thief
+  //   const players = room.players;
+  //   const thiefIndex = Math.floor(Math.random() * players.length);
+  //   players.forEach((p, i) => (p.isThief = i === thiefIndex));
+  //   room.thiefId = players[thiefIndex].id;
+  //   io.to(roomCode).emit("roomUpdate", room);
+  //   console.log(
+  //     `Game started in room ${roomCode} with thief ${players[thiefIndex].name}`
+  //   );
+  // });
+
+  socket.on("startGame", ({ roomCode, category, word }) => {
+  console.log(word, "word");
+
+  const room = rooms[roomCode];
+  if (!room) return;
+
+  console.log(category, "cat");
+
+  const wordsForCategory = WORDS[category];
+  if (!wordsForCategory || wordsForCategory.length === 0) {
+    console.log(`Category "${category}" not found or empty!`);
+    return;
+  }
+
+  // ✅ ADD: check word and use it
+  if (word && wordsForCategory.includes(word)) {
+    room.currentWord = word;
+  } else {
+    room.currentWord = randomItem(wordsForCategory);
+  }
+
+  room.status = "playing";
+  room.category = category;
+
+  // Pick one player as thief
+  const players = room.players;
+  const thiefIndex = Math.floor(Math.random() * players.length);
+  players.forEach((p, i) => (p.isThief = i === thiefIndex));
+  room.thiefId = players[thiefIndex].id;
+
+  // ✅ ADD: send word to non-thief players only
+  players.forEach((player) => {
+    if (!player.isThief) {
+      io.to(player.id).emit("wordAssigned", room.currentWord);
+    }
   });
+
+  io.to(roomCode).emit("roomUpdate", room);
+
+  console.log(
+    `Game started in room ${roomCode} with word "${room.currentWord}"`
+  );
+});
+
 
   /* SEND MESSAGE */
   socket.on("sendMessage", ({ roomCode, content }, callback) => {
