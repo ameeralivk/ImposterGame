@@ -572,7 +572,7 @@ export const useGameState = create<GameState>((set, get) => {
   const initSocket = () => {
     if (socket) return socket;
 
-    socket = io("http://localhost:4000", { transports: ["websocket"] });
+    socket = io("https://impostergame-backend.onrender.com", { transports: ["websocket"] });
 
     socket.on("roomUpdate", (room: Room) => {
       console.log("ROOM UPDATE:", room.status);
