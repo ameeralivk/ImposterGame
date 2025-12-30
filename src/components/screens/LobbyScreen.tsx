@@ -20,22 +20,37 @@ export const LobbyScreen = () => {
     toast.success("Room created!");
   };
 
+  // const handleJoin = () => {
+  //   if (!playerName.trim()) {
+  //     toast.error("Please enter your name!");
+  //     return;
+  //   }
+  //   if (!roomCode.trim()) {
+  //     toast.error("Please enter room code!");
+  //     return;
+  //   }
+  //   const success = joinRoom(roomCode.trim(), playerName.trim());
+  //   if (success) {
+  //     toast.success("Joined room!");
+  //   } else {
+  //     toast.error("Room not found!");
+  //   }
+  // };
+
   const handleJoin = () => {
-    if (!playerName.trim()) {
-      toast.error("Please enter your name!");
-      return;
-    }
-    if (!roomCode.trim()) {
-      toast.error("Please enter room code!");
-      return;
-    }
-    const success = joinRoom(roomCode.trim(), playerName.trim());
-    if (success) {
-      toast.success("Joined room!");
-    } else {
-      toast.error("Room not found!");
-    }
-  };
+  if (!playerName.trim()) {
+    toast.error("Please enter your name!");
+    return;
+  }
+  if (!roomCode.trim()) {
+    toast.error("Please enter room code!");
+    return;
+  }
+
+  joinRoom(roomCode.trim(), playerName.trim()); // just call it
+  toast.success("Joined room!"); // optional: you can show success inside joinRoom callback
+};
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
