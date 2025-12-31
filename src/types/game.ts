@@ -15,6 +15,8 @@ export interface Room {
   code: string;
   hostId: string;
   players: Player[];
+  timer?:number;
+  timerRunning?:boolean;
   status: "waiting" | "playing" | "voting" | "results";
   currentWord: string | null;
   category: string | null;

@@ -544,6 +544,154 @@
 //   };
 // });
 
+// import { create } from "zustand";
+// import { io, Socket } from "socket.io-client";
+// import { Room, Player, GameMessage } from "@/types/game";
+
+// interface GameState {
+//   socket: Socket | null;
+//   room: Room | null;
+//   currentPlayer: Player | null;
+//   messages: GameMessage[];
+
+//   timer?: number; // current timer value in seconds
+//   timerRunning?: boolean; // whether the timer is currently running
+//   setTimer?: (seconds: number) => void; // action to set and start the timer
+
+//   createRoom: (playerName: string) => void;
+//   joinRoom: (roomCode: string, playerName: string) => void;
+//   startGame: (category: string, word: string) => void;
+//   sendMessage: (content: string) => void;
+//   castVote: (targetId: string) => void;
+//   leaveRoom: () => void;
+//   nextRound?: () => void;
+// }
+
+// export const useGameState = create<GameState>((set, get) => {
+//   // 🔹 Singleton socket
+//   let socket: Socket | null = null;
+
+//   const initSocket = () => {
+//     if (socket) return socket;
+
+//     socket = io("https://impostergame-backend.onrender.com/", { transports: ["websocket"] });
+
+//     socket.on("roomUpdate", (room: Room) => {
+//       console.log("ROOM UPDATE:", room.status);
+//       set({ room });
+//     });
+
+//     socket.on("newMessage", (msg: GameMessage) => {
+//       console.log(msg, "message received");
+//       set((state) => ({ messages: [...state.messages, msg] }));
+//     });
+
+//     socket.on("disconnect", () => {
+//       console.warn("Socket disconnected");
+//     });
+
+//     return socket;
+//   };
+
+//   return {
+//     socket: null,
+//     room: null,
+//     currentPlayer: null,
+//     messages: [],
+
+//     // ---------- CREATE ROOM ----------
+//     createRoom: (playerName) => {
+//       const s = initSocket();
+//       set({ socket: s });
+
+//       s.emit("createRoom", { playerName }, (room: Room, player: Player) => {
+//         set({ room, currentPlayer: player, messages: [] });
+//       });
+//     },
+
+//     // ---------- JOIN ROOM ----------
+//     joinRoom: (roomCode, playerName) => {
+//       const s = initSocket();
+//       set({ socket: s });
+
+//       s.emit(
+//         "joinRoom",
+//         { roomCode, playerName },
+//         (room: Room, player: Player) => {
+//           if (!room || !player) {
+//             alert("Room not found");
+//             return;
+//           }
+//           set({ room, currentPlayer: player });
+//         }
+//       );
+//     },
+
+//     // ---------- START GAME ----------
+//     startGame: (category, word) => {
+//       const { room } = get();
+//       if (!socket || !room) return;
+
+//       console.log("START GAME EMIT");
+
+//       // Optimistically update room status so UI navigates immediately
+//       set({
+//         room: {
+//           ...room,
+//           status: "playing",
+//           category,
+//           currentWord: word,
+//         },
+//       });
+
+//       socket.emit("startGame", { roomCode: room.code, category, word });
+//     },
+
+//     // ---------- SEND MESSAGE ----------
+//     // sendMessage: (content) => {
+//     //   const { room } = get();
+//     //   console.log(content, "ameer ready");
+//     //   if (!socket || !room) return;
+
+//     //   socket.emit("newMessage", { roomCode: room.code, content });
+//     // },
+//     sendMessage: (content) => {
+//       const { room } = get();
+//       console.log(content, "ameer ready");
+//       if (!socket || !room) return;
+
+//       socket.emit("sendMessage", { roomCode: room.code, content });
+//     },
+
+//     // ---------- CAST VOTE ----------
+//     castVote: (targetId) => {
+//       const { room } = get();
+//       if (!socket || !room) return;
+
+//       socket.emit("castVote", { roomCode: room.code, targetId });
+//     },
+
+//     // ---------- LEAVE ROOM ----------
+//     leaveRoom: () => {
+//       const { room } = get();
+
+//       if (socket && room) {
+//         socket.emit("leaveRoom", { roomCode: room.code });
+//         // Do NOT disconnect socket globally; leave for next room join
+//       }
+
+//       set({
+//         socket: null,
+//         room: null,
+//         currentPlayer: null,
+//         messages: [],
+//       });
+
+//       socket = null;
+//     },
+//   };
+// });
+
 import { create } from "zustand";
 import { io, Socket } from "socket.io-client";
 import { Room, Player, GameMessage } from "@/types/game";
@@ -554,6 +702,12 @@ interface GameState {
   currentPlayer: Player | null;
   messages: GameMessage[];
 
+  // Timer state
+  timer: number; // current countdown in seconds
+  timerRunning: boolean; // whether the timer is running
+  setTimer: (seconds: number) => void; // host sets timer for all
+
+  // Game actions
   createRoom: (playerName: string) => void;
   joinRoom: (roomCode: string, playerName: string) => void;
   startGame: (category: string, word: string) => void;
@@ -564,22 +718,44 @@ interface GameState {
 }
 
 export const useGameState = create<GameState>((set, get) => {
-  // 🔹 Singleton socket
   let socket: Socket | null = null;
 
   const initSocket = () => {
     if (socket) return socket;
-
-    socket = io("https://impostergame-backend.onrender.com/", { transports: ["websocket"] });
+    socket = io("https://impostergame-backend.onrender.com", {
+      transports: ["websocket"],
+    });
 
     socket.on("roomUpdate", (room: Room) => {
-      console.log("ROOM UPDATE:", room.status);
       set({ room });
     });
 
-    socket.on("newMessage", (msg: GameMessage) => {
-      console.log(msg, "message received");
-      set((state) => ({ messages: [...state.messages, msg] }));
+    socket.on("newMessage", (message: GameMessage) => {
+      set((state) => ({ messages: [...state.messages, message] }));
+    });
+
+    // Receive timer updates from server
+    // socket.on(
+    //   "timerUpdate",
+    //   ({ timer, running }: { timer: number; running: boolean }) => {
+    //     set({ timer, timerRunning: running });
+    //   }
+    // );
+    // socket.on("timerUpdate", ({ timer, running }) => {
+    //   set((state) => ({
+    //     room: state.room
+    //       ? { ...state.room, timer, timerRunning: running }
+    //       : null,
+    //   }));
+    // });
+    socket.on("timerUpdate", ({ timer, running }) => {
+      set((state) => ({
+        timer,
+        timerRunning: running,
+        room: state.room
+          ? { ...state.room, timer, timerRunning: running }
+          : null,
+      }));
     });
 
     socket.on("disconnect", () => {
@@ -594,6 +770,20 @@ export const useGameState = create<GameState>((set, get) => {
     room: null,
     currentPlayer: null,
     messages: [],
+
+    // Timer defaults
+    timer: 60,
+    timerRunning: false,
+
+    // Host sets timer
+    setTimer: (seconds: number) => {
+      const { room, currentPlayer } = get();
+      if (!socket || !room || !currentPlayer?.isHost) return;
+      // Update local state
+      set({ timer: seconds, timerRunning: true });
+      // Notify server to broadcast to all
+      socket.emit("setTimer", { roomCode: room.code, timer: seconds });
+    },
 
     // ---------- CREATE ROOM ----------
     createRoom: (playerName) => {
@@ -628,32 +818,18 @@ export const useGameState = create<GameState>((set, get) => {
       const { room } = get();
       if (!socket || !room) return;
 
-      console.log("START GAME EMIT");
-
-      // Optimistically update room status so UI navigates immediately
+      // Optimistic UI update
       set({
-        room: {
-          ...room,
-          status: "playing",
-          category,
-          currentWord: word,
-        },
+        room: { ...room, status: "playing", category, currentWord: word },
+        timerRunning: false, // don't start automatically
       });
 
       socket.emit("startGame", { roomCode: room.code, category, word });
     },
 
     // ---------- SEND MESSAGE ----------
-    // sendMessage: (content) => {
-    //   const { room } = get();
-    //   console.log(content, "ameer ready");
-    //   if (!socket || !room) return;
-
-    //   socket.emit("newMessage", { roomCode: room.code, content });
-    // },
     sendMessage: (content) => {
-      const { room } = get();
-      console.log(content, "ameer ready");
+      const { socket, room } = get();
       if (!socket || !room) return;
 
       socket.emit("sendMessage", { roomCode: room.code, content });
@@ -661,7 +837,7 @@ export const useGameState = create<GameState>((set, get) => {
 
     // ---------- CAST VOTE ----------
     castVote: (targetId) => {
-      const { room } = get();
+      const { socket, room } = get();
       if (!socket || !room) return;
 
       socket.emit("castVote", { roomCode: room.code, targetId });
@@ -670,10 +846,8 @@ export const useGameState = create<GameState>((set, get) => {
     // ---------- LEAVE ROOM ----------
     leaveRoom: () => {
       const { room } = get();
-
       if (socket && room) {
         socket.emit("leaveRoom", { roomCode: room.code });
-        // Do NOT disconnect socket globally; leave for next room join
       }
 
       set({
@@ -681,6 +855,8 @@ export const useGameState = create<GameState>((set, get) => {
         room: null,
         currentPlayer: null,
         messages: [],
+        timer: 60,
+        timerRunning: false,
       });
 
       socket = null;
